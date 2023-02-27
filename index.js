@@ -3,6 +3,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
 const indexRouter = require('./src/routes/index');
+const ordersRouter = require('./src/routes/orders');
 
 const app = express();
 const API_PREFIX = 'api';
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(`/${API_PREFIX}/`, indexRouter);
+app.use(`/${API_PREFIX}/orders/`, ordersRouter);
 app.use(`/${API_PREFIX}/healthCheck`, require('express-healthcheck')());
 
 module.exports = app;
