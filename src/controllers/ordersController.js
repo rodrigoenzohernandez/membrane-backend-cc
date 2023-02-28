@@ -1,7 +1,11 @@
+const getOrdersBook = require('../services/getOrdersBook');
+const formatPair = require('../utils/formatPair');
+
 const ordersController = {
-  getOrderBook(req, res) {
+  async getOrderBook(req, res) {
     try {
-      res.send({ title: 'WIP: getOrderBook' });
+      const symbol = formatPair(req.query.pair);
+      await getOrdersBook(symbol, res);
     } catch (error) {
       res.json(error);
     }
