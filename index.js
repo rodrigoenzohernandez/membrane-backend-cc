@@ -1,6 +1,7 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const { NODE_ENV } = require('./src/config');
 
 const indexRouter = require('./src/routes/index');
 const ordersRouter = require('./src/routes/orders');
@@ -8,7 +9,6 @@ const ordersRouter = require('./src/routes/orders');
 const app = express();
 const API_PREFIX = 'api';
 
-const NODE_ENV = process.env.NODE_ENV || 'dev';
 app.use(logger(NODE_ENV));
 app.use(express.json());
 
