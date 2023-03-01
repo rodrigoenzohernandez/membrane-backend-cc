@@ -5,8 +5,9 @@ const {
   NODE_ENV = 'dev',
   SOCKET_URL = null,
   API_PORT = 3001,
+  WSS_PORT = 9090,
 } = process.env;
 
 module.exports = {
-  LOG_LEVEL, NODE_ENV, SOCKET_URL, API_PORT,
+  LOG_LEVEL, NODE_ENV, SOCKET_URL, API_PORT, WSS_PORT,
 };
