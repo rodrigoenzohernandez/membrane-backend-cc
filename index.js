@@ -2,6 +2,9 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const { NODE_ENV } = require('./src/config');
+const createWebSocketServer = require('./src/utils/createWebSocketServer');
+
+createWebSocketServer();
 
 const indexRouter = require('./src/routes/index');
 const ordersRouter = require('./src/routes/orders');
