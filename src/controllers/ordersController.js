@@ -1,4 +1,6 @@
 const getOrdersBook = require('../services/getOrdersBook');
+const simulate = require('../services/simulate');
+
 const formatPair = require('../utils/formatPair');
 
 const ordersController = {
@@ -10,9 +12,11 @@ const ordersController = {
       res.json(error);
     }
   },
-  simulateOperation(req, res) {
+  async simulateOperation(req, res) {
     try {
-      res.send({ title: 'WIP: simulateOperation' });
+      const { pair, operation, amount } = req.body;
+      const symbol = formatPair(pair);
+      await simulate(res, symbol, operation, amount);
     } catch (error) {
       res.json(error);
     }
