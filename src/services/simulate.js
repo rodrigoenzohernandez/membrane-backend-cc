@@ -1,11 +1,41 @@
 const WebSocket = require('ws');
-const { EXTERNAL_SOCKET_URL } = require('../config');
+const { EXTERNAL_SOCKET_URL, LOCAL_SOCKET_URL } = require('../config');
 
-async function simulate(res, symbol, operation, amount) {
+let effectivePrice = 0;
+let rest = 0;
+let operationType = null;
+
+/**
+ * Calculates the effectivePrice and closes the ws when its done.
+ * If the operation is BUY the ask orders will be used (orders with negative amount)
+ * If the operation is SELL the bid orders will be used (orders with positive amount)
+ */
+function calculateOperation(order, ws) {
+  let [,, orderAmount] = order;
+  const [price] = order;
+
+  if ((operationType === 'BUY' && orderAmount < 0) || (operationType === 'SELL' && orderAmount > 0)) {
+    orderAmount = Math.abs(orderAmount);
+    const enoughContracts = ((orderAmount - rest) >= 0);
+
+    if (enoughContracts) {
+      effectivePrice += (rest * price);
+      operationType = 'DONE';
+      return ws.close();
+    }
+    rest -= orderAmount;
+    effectivePrice += (orderAmount * price);
+  }
+  return null;
+}
+
+function simulate(res, symbol, operation, amount) {
   const ws = new WebSocket(EXTERNAL_SOCKET_URL);
-  let effectivePrice = 0;
-  let rest = amount;
-  let operationType = operation;
+  const wsMembrane = new WebSocket(LOCAL_SOCKET_URL);
+
+  effectivePrice = 0;
+  rest = amount;
+  operationType = operation;
 
   const msg = JSON.stringify({
     event: 'subscribe',
@@ -19,30 +49,28 @@ async function simulate(res, symbol, operation, amount) {
     const decoded = JSON.parse(message);
     const order = decoded[1] || null;
 
-    if (order?.length === 3) {
-      let [,, orderAmount] = order;
-      const [price] = order;
+    // Use the orders inside the snapshot. Ex: [[ 22202, 1, 0.007 ],[ 22200, 2, 0.101 ],...]
+    if (order?.length > 3) {
+      const snapshot = order;
 
-      // If the operation is buy the ask orders must be used (orders with amount in negative)
-      if (operationType === 'BUY' && orderAmount < 0) {
-        orderAmount *= -1;
-        const enoughContracts = ((orderAmount - rest) >= 0);
-
-        if (enoughContracts) {
-          effectivePrice += (rest * price);
-          operationType = 'DONE';
-          return ws.close();
-        }
-        rest -= orderAmount;
-        effectivePrice += (orderAmount * price);
+      for (let i = 0; i < snapshot.length; i += 1) {
+        calculateOperation(snapshot[i], ws);
+        if (operationType === 'DONE') break;
       }
+    }
+    // Use the individual orders. Ex: [ 22203, 8, -1.84461458 ]
+    if (order?.length === 3) {
+      calculateOperation(order, ws);
     }
     return null;
   });
 
   ws.on('close', () => {
+    const response = { amount, avgPrice: effectivePrice / amount, effectivePrice };
+    const wsData = Buffer.from(JSON.stringify({ tag: 'simulate', response }));
+    wsMembrane.send(wsData);
     res.send({
-      data: { amount, avgPrice: effectivePrice / amount, effectivePrice },
+      data: response,
     });
   });
 
