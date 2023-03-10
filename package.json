@@ -1,7 +1,7 @@
 {
   "name": "membrane-backend-cc",
   "version": "1.0.0",
-  "description": " public API REST that retrieves market information for trading pairs",
+  "description": "Public API REST that retrieves market information for trading pairs",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
